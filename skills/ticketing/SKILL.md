@@ -32,7 +32,10 @@ delegatee needs it for `ticket_status` when the work is done.
    permanent ticket number **N**. Keep any draft plan in the repo's gitignored
    `.tmp/` scratch only; the database copy is the record.
 2. **Todo** — append item **`N: <descriptive name>`** at the END of the todo
-   list (never renumber; front-jump only on an explicit "do it next"). Flush
+   list, where N is the ticket number from step 1 — the N prefix is the
+   item's whole id: never renumber, never add any other numbering (no
+   "1:", "2:"). The ticket's own summary stays a plain name. Front-jump only
+   on an explicit "do it next". Flush
    with `todo_write`: it replaces the list wholesale and mirrors statuses onto
    tickets — closing item `N: ...` sets ticket N's status automatically
    (fail-open: a broken store never breaks the flush).

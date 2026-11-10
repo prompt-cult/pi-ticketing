@@ -24,7 +24,7 @@ interface TodoDetails {
 }
 
 const TodoItemSchema = Type.Object({
-  content: Type.String({ description: 'the item text, starting with its ticket number ("N: ...") where a ticket backs it' }),
+  content: Type.String({ description: 'the item text, starting with its ticket number ("N: ...") where a ticket backs it — no other numbering' }),
   status: StringEnum(["pending", "in_progress", "completed", "cancelled"], {
     description: "pending | in_progress | completed | cancelled",
   }),
@@ -61,7 +61,7 @@ export function registerTodoTool(pi: ExtensionAPI, getStore: () => TicketStore |
     label: "Todo",
     description: [
       "Flush the ordered todo list: replaces it wholesale with the given items.",
-      'Each item that a ticket backs starts with its ticket number ("N: ..."); the number is the item\'s permanent id — never renumber.',
+      'Each item that a ticket backs starts with its ticket number ("N: ..."); the number is the item\'s permanent id — never renumber, and never add any other numbering (no "1:", "2:" — the N prefix IS the id).',
       "Closing an item (status completed/cancelled) mirrors the status onto its ticket automatically.",
       "State survives branching and forking (it lives in the session tree).",
     ].join(" "),
