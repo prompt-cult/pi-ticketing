@@ -1,63 +1,62 @@
-# mistral-vibe-ticketing
+# pi-ticketing
 
-Port of [opencode-ticketing](https://github.com/prompt-cult/opencode-ticketing)
-(v2.2.1) to a Mistral Vibe plugin (Agent Plugins 1.0 + `ai.mistral.vibe`
-extensions). Registration layer only — the contract is unchanged:
-
-> **pi port:** the `pi-extension` branch carries the same contract as a pi
-> package (`package.json` + `extensions/`) — in-process tools instead of an
-> MCP stdio server, `node:sqlite` instead of `bun:sqlite`, DB home
-> `~/.pi/agent/ticketing/`. See `DESIGN.md` on that branch for the
-> file-by-file mapping. Install: `pi install ./pi-ticketing` (or
-> `pi -e ./extensions/index.ts` to try it).
+Tickets + todos + delegation for [pi](https://pi.dev), ported from
+[opencode-ticketing](https://github.com/prompt-cult/opencode-ticketing)
+(v2.2.1) via the Mistral Vibe plugin. Same contract, native pi surface:
 
 - A ticket is an IMMUTABLE record with an APPEND-ONLY comment stream; STATUS
   is the only field that ever changes. Nothing is ever deleted.
-- `rollout_id` IS the session id — one id, no other.
-- One tool per action; per-tool JTD schemas; every failure returns
+- `rollout_id` IS the session id — one id, no other. It is stamped from ground
+  truth (the pi session id, or the delegated namespace injected into a
+  subagent's environment) — never taken from model input.
+- One tool per action; TypeBox schemas enforce each tool's legal parameters at
+  the harness layer; every failure returns
   `{code, message, corrected_call}` (re-emit verbatim → success).
-- The built-in todo list is hot ordering; the ticket store is cold storage.
-  The todo mirror hook closes ticket `N` when todo item `N: …` closes.
-- One SQLite DB outside every repo, shared by all TUIs on all projects and
-  worktrees: `~/.config/mistral-vibe/mistral-vibe-ticketing/ticket.db`
-  (override with `TICKET_DB_HOME`).
+- The todo list is hot ordering (`todo_write`, state in tool-result details —
+  branch-correct); the ticket store is cold storage. Closing todo item
+  `N: …` mirrors ticket N's status automatically (fail-open).
+- One SQLite DB outside every repo, shared by all sessions on all projects
+  and worktrees: `~/.pi/agent/ticketing/ticket.db`
+  (override with `TICKET_DB_HOME`). `node:sqlite` — no runtime dependencies.
 
 ## Tools
 
-`ticketing.ticket_add` / `ticket_get` / `ticket_list` / `ticket_comment` /
-`ticket_status` / `ticket_rules` / `ticket_help`. Full contract:
-`ticket_help`.
+`ticket_add` / `ticket_get` / `ticket_list` / `ticket_comment` /
+`ticket_status` / `ticket_rules` / `ticket_help`, plus `todo_write`,
+`delegate`, and the `/tickets` overlay. Full contract: `ticket_help`.
 
-## Install (agent-friendly)
+## Install
 
 ```sh
-./install.sh          # global: ~/.vibe/plugins/ticketing/, then /reload
-# or project scope (trusted folder):
-mkdir -p .vibe/plugins && cp -R "$(pwd)" .vibe/plugins/ticketing && /reload
+pi install ./pi-ticketing          # local package
+pi install git:github.com/prompt-cult/pi-ticketing@pi-extension
+pi -e ./extensions/index.ts        # or try it for one invocation
 ```
-
-Requires `bun` on PATH (run `command -v bun` to prove it before install; the
-imperative is "do not fetch modules at build time" — none are fetched).
 
 ## Test
 
 ```sh
-TICKET_DB_HOME=$(mktemp -d .tmp/db-XXXX) bun test server/ticket.test.ts
+node --test --experimental-strip-types extensions/lib/ticket.test.ts
 ```
 
-16 tests: the split-tool contract, per-tool required schemas, the envelope on
-every failure path, the verbatim-re-emit acceptance, the todowrite mirror.
+13 tests: the split-tool contract, identity stamping, the envelope on every
+failure path, the verbatim-re-emit acceptance, the delegatee refusal, and the
+todo→ticket mirror.
 
 ## Layout
 
 ```
-plugin.json               Agent Plugins 1.0 manifest + ai.mistral.vibe ext
-mcp.json                  stdio server: bun run ${PLUGIN_ROOT}/server/index.ts
-server/ticket.ts          tool surface: schemas, JTD validators, handlers, contract text
-server/ticket-store.ts    TicketStore (bun:sqlite), TABLE ticket + ticket_comment
-server/sync-hook.ts       todo mirror (post_tool hook, fail-open)
-server/index.ts           MCP stdio JSON-RPC entry
-server/ticket.test.ts     the contract tests
-skills/ticketing/         SKILL.md — the flow + delegation doctrine
-ai.mistral.vibe/hooks.toml  todo-mirror post_tool hook
+package.json               pi-package manifest (peerDependencies, no runtime deps)
+extensions/index.ts        entry: store singleton, session lifecycle, 7 ticket tools
+extensions/schemas.ts      TypeBox schemas — misuse unrepresentable at the harness layer
+extensions/todo-tool.ts    todo_write — hot list, delegatee refusal, fail-open mirror
+extensions/delegate-tool.ts  delegate — spawned pi subagents, TICKET_ROLLOUT_ID namespaces
+extensions/render.ts       /tickets overlay (grouped by status, Escape closes)
+extensions/lib/ticket.ts   the contract: handlers, envelope, help/rules text
+extensions/lib/ticket-store.ts  TicketStore (node:sqlite), TABLE ticket + ticket_comment
+extensions/lib/session.ts  rollout-id resolution (env > captured session id)
+extensions/lib/sync.ts     the todo→ticket mirror, in-process
+extensions/lib/ticket.test.ts   the contract tests
+skills/ticketing/          SKILL.md — the flow + delegation doctrine
+DESIGN.md                  the port design (file-by-file mapping from the Vibe plugin)
 ```
