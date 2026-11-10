@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { TicketStore } from "./ticket-store.ts";
 import {
   executeAdd,
   executeGet,
@@ -20,8 +21,6 @@ import {
   fail,
   parseEnvelope,
   toToolResult,
-  TicketStore,
-  ticketDbPath,
 } from "./ticket.ts";
 
 beforeEach(() => {

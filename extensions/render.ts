@@ -5,7 +5,7 @@
 // session's tickets, grouped by status, fed by store.list() for the current
 // rollout id — with `all` showing every session's. Escape closes.
 import { matchesKey, truncateToWidth } from "@earendil-works/pi-tui";
-import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
 import { currentRolloutId } from "./lib/session.ts";
 import type { TicketRow, TicketStore } from "./lib/ticket-store.ts";
 

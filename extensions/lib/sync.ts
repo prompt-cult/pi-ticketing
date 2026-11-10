@@ -16,7 +16,7 @@ export interface TodoItem {
   priority?: string;
 }
 
-export const TODO_STATUSES = ["pending", "in_progress", "completed", "cancelled"] as const;
+const TODO_STATUSES = ["pending", "in_progress", "completed", "cancelled"] as const;
 
 export interface FlushResult {
   todos: TodoItem[];

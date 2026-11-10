@@ -21,10 +21,6 @@ export function captureSession(ctx: any): string | null {
   return captured;
 }
 
-export function capturedSession(): string | null {
-  return captured;
-}
-
 export function currentRolloutId(ctx?: any): string | null {
   return process.env.TICKET_ROLLOUT_ID || captured || ctx?.sessionManager?.getSessionId?.() || null;
 }

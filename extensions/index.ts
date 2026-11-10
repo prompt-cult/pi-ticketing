@@ -1,9 +1,10 @@
 // index.ts — the pi-ticketing extension entry.
 //
-// Registers, in order: the ticket tools (Step 3 of the design — add/get/list/
-// comment/status/rules/help), todo_write (the hot list, with the fail-open
-// ticket mirror), delegate (spawned pi subagents with injected namespaces),
-// the /tickets overlay, and the session-id capture + store lifecycle.
+// Registers: the seven ticket tools (add/get/list/comment/status/rules/help,
+// pure handlers wrapped through toToolResult), todo_write (the hot list, with
+// the fail-open ticket mirror), delegate (spawned pi subagents with injected
+// namespaces), the /tickets overlay, and the session-id capture + store
+// lifecycle.
 //
 // The store is a lazy singleton: opened on first use, closed on
 // session_shutdown. It lives outside every repo — one SQLite file (WAL) shared

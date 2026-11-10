@@ -13,8 +13,6 @@ import { mkdirSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { homedir } from "node:os"
 
-export const STAMP: string = Date.now().toString(36)
-
 const STATUS = ["pending", "in_progress", "completed", "cancelled", "superseded"] as const
 export type TicketStatus = (typeof STATUS)[number]
 export const STATUSES: ReadonlySet<string> = new Set<string>(STATUS)

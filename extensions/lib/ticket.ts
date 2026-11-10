@@ -24,16 +24,9 @@
 //     gate) and ticket_list (cross-session adoption) still take ids as input.
 //   * The caller's identity arrives as an explicit `callerId` argument —
 //     resolved by the extension from session.ts, never from the model.
-import type { TicketStore, TicketRow, TicketStatus } from "./ticket-store.ts";
+import type { TicketStore, TicketStatus } from "./ticket-store.ts";
 
-export {
-  TicketStore,
-  STATUSES,
-  ticketDbPath,
-} from "./ticket-store.ts";
-export type { TicketRow, TicketComment, TicketStatus } from "./ticket-store.ts";
-
-export const STATUS_VALUES: readonly TicketStatus[] = [
+const STATUS_VALUES: readonly TicketStatus[] = [
   "pending",
   "in_progress",
   "completed",
