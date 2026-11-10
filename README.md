@@ -4,6 +4,13 @@ Port of [opencode-ticketing](https://github.com/prompt-cult/opencode-ticketing)
 (v2.2.1) to a Mistral Vibe plugin (Agent Plugins 1.0 + `ai.mistral.vibe`
 extensions). Registration layer only — the contract is unchanged:
 
+> **pi port:** the `pi-extension` branch carries the same contract as a pi
+> package (`package.json` + `extensions/`) — in-process tools instead of an
+> MCP stdio server, `node:sqlite` instead of `bun:sqlite`, DB home
+> `~/.pi/agent/ticketing/`. See `DESIGN.md` on that branch for the
+> file-by-file mapping. Install: `pi install ./pi-ticketing` (or
+> `pi -e ./extensions/index.ts` to try it).
+
 - A ticket is an IMMUTABLE record with an APPEND-ONLY comment stream; STATUS
   is the only field that ever changes. Nothing is ever deleted.
 - `rollout_id` IS the session id — one id, no other.

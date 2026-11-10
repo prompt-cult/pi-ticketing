@@ -1,0 +1,24 @@
+{
+  "name": "pi-ticketing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tickets + todos + delegation for pi: immutable SQLite-backed tickets (append-only comments, status-only mutation), a flush-based todo list that mirrors status onto tickets, and pi-subprocess delegation with injected ticket namespaces.",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "ticketing",
+    "todos",
+    "delegation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prompt-cult/pi-ticketing.git"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  }
+}
