@@ -44,6 +44,13 @@ install-repo: ## DEST=<path/to/git-repo> — install project-local into DEST/.pi
 	dest="$$(echo $(DEST))"; \
 	test -d "$$dest" || { echo "install-repo: not a directory: $$dest" >&2; exit 1; }; \
 	test -e "$$dest/.git" || { echo "install-repo: no .git in $$dest — refusing (not a git repo)" >&2; exit 1; }; \
+	if [ -d "$(PI_AGENT)/extensions/$(EXT_NAME)" ]; then \
+		echo "install-repo: REFUSING — $(EXT_NAME) is also installed globally:" >&2; \
+		echo "  $(PI_AGENT)/extensions/$(EXT_NAME)" >&2; \
+		echo '  pi would load BOTH copies and crash on duplicate tool names.' >&2; \
+		echo '  Remedy: make uninstall-global (then re-run this command).' >&2; \
+		exit 1; \
+	fi; \
 	ext="$$dest/.pi/extensions/$(EXT_NAME)"; skill="$$dest/.pi/skills/$(SKILL_NAME)"; \
 	if [ "$(PRUNE)" = "1" ]; then rm -rf "$$ext" "$$skill"; fi; \
 	mkdir -p "$$ext" "$$skill"; \
@@ -54,7 +61,13 @@ install-repo: ## DEST=<path/to/git-repo> — install project-local into DEST/.pi
 	echo 'pi loads project-local extensions after you trust the project; run /reload if pi is live.'
 
 install-global: ## Install into ~/.pi/agent/ (every project, this user)
-	@ext="$(PI_AGENT)/extensions/$(EXT_NAME)"; skill="$(PI_AGENT)/skills/$(SKILL_NAME)"; \
+	@if [ -d ".pi/extensions/$(EXT_NAME)" ]; then \
+		echo "install-global: REFUSING — this repo (.pi/extensions/$(EXT_NAME)) has a project-local copy." >&2; \
+		echo '  pi would load BOTH copies in this repo and crash on duplicate tool names.' >&2; \
+		echo '  Remedy: make uninstall-repo DEST=.' first, or install globally from a different cwd.' >&2; \
+		exit 1; \
+	fi; \
+	ext="$(PI_AGENT)/extensions/$(EXT_NAME)"; skill="$(PI_AGENT)/skills/$(SKILL_NAME)"; \
 	if [ "$(PRUNE)" = "1" ]; then rm -rf "$$ext" "$$skill"; fi; \
 	mkdir -p "$$ext" "$$skill"; \
 	cp -R "$(EXT_SRC)/." "$$ext/"; \

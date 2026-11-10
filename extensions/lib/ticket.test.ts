@@ -17,7 +17,9 @@ import {
   executeStatus,
   executeRules,
   executeHelp,
+  fail,
   parseEnvelope,
+  toToolResult,
   TicketStore,
   ticketDbPath,
 } from "./ticket.ts";
@@ -36,6 +38,31 @@ async function add(todo: string, rollout_id: string, md_content?: string) {
   const res = await executeAdd(new TicketStore(), { todo, md_content }, rollout_id);
   return JSON.parse(res.text);
 }
+
+// ─── The harness-facing result shape (regression: a bare { text } result
+//     crashed pi's TUI renderer with content-undefined) ──────────────────────
+
+test("every handler result passes through toToolResult into pi's tool-result shape", async () => {
+  const created = await add("shape test", "sess_shape");
+  for (const failable of [
+    await executeAdd(new TicketStore(), { todo: "x" }, "sess_shape"),
+    await executeGet(new TicketStore(), { id: created.id }),
+    await executeList({ all: true }, new TicketStore(), "sess_shape"),
+    await executeComment(new TicketStore(), { id: created.id, content: "done" }, "sess_shape"),
+    await executeStatus(new TicketStore(), { id: created.id, rollout_id: "sess_shape", status: "completed" }, "sess_shape"),
+    await executeRules(),
+    await executeHelp(),
+    fail("E_TEST", "synthetic failure", {}),
+  ]) {
+    const r = toToolResult(failable);
+    assert.ok(Array.isArray(r.content) && r.content.length === 1, "content is a non-empty array");
+    assert.equal(r.content[0].type, "text");
+    assert.equal(typeof r.content[0].text, "string");
+    assert.equal(r.details, undefined);
+    if (failable.isError) assert.equal(r.isError, true);
+    else assert.equal("isError" in r, false);
+  }
+});
 
 // ─── The schemas make misuse unrepresentable (harness layer; here we assert
 //     the handlers keep the same guarantees as defense in depth) ─────────────

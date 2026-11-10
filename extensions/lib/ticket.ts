@@ -61,6 +61,25 @@ export function ok(payload: unknown): Failable {
   return { text: JSON.stringify(payload, null, 2) };
 }
 
+/**
+ * The ONLY place the contract's { text } shape meets pi's tool-result shape.
+ * pi tool results MUST be { content: [{ type: "text", text }], details } —
+ * a bare { text } reaches the TUI renderer with content undefined and crashes
+ * it (getTextOutput filters content). Every registerTool wrapper passes its
+ * handler result through this.
+ */
+export function toToolResult(r: Failable): {
+  content: Array<{ type: "text"; text: string }>;
+  details: undefined;
+  isError?: boolean;
+} {
+  return {
+    content: [{ type: "text", text: r.text }],
+    details: undefined,
+    ...(r.isError ? { isError: true } : {}),
+  };
+}
+
 /** Parsed envelope or null — for tests and self-heal re-emit logic. */
 export function parseEnvelope(content: string): { code: string; message: string; corrected_call: Record<string, unknown> } | null {
   try {

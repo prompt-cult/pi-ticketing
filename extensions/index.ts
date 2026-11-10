@@ -27,6 +27,7 @@ import {
   LIST_DESC,
   RULES_DESC,
   STATUS_DESC,
+  toToolResult,
 } from "./lib/ticket.ts";
 import { ADD_PARAMS, COMMENT_PARAMS, GET_PARAMS, LIST_PARAMS, NONE_PARAMS, STATUS_PARAMS } from "./schemas.ts";
 import { registerTodoTool } from "./todo-tool.ts";
@@ -57,6 +58,9 @@ export default function (pi: ExtensionAPI) {
   });
 
   // ─── The ticket tools (pure handlers + schemas + renderers) ─────────────
+  // The pure handlers return the contract's { text, isError? } shape; every
+  // result passes through toToolResult (lib/ticket.ts) to become a proper pi
+  // tool result — a bare { text } crashes the TUI renderer.
 
   pi.registerTool({
     name: "ticket_add",
@@ -64,7 +68,7 @@ export default function (pi: ExtensionAPI) {
     description: ADD_DESC,
     parameters: ADD_PARAMS,
     async execute(_id, params, _signal, _onUpdate, ctx) {
-      return executeAdd(getStore(), params, currentRolloutId(ctx));
+      return toToolResult(await executeAdd(getStore(), params, currentRolloutId(ctx)));
     },
   });
 
@@ -74,7 +78,7 @@ export default function (pi: ExtensionAPI) {
     description: GET_DESC,
     parameters: GET_PARAMS,
     async execute(_id, params) {
-      return executeGet(getStore(), params);
+      return toToolResult(await executeGet(getStore(), params));
     },
   });
 
@@ -84,7 +88,7 @@ export default function (pi: ExtensionAPI) {
     description: LIST_DESC,
     parameters: LIST_PARAMS,
     async execute(_id, params, _signal, _onUpdate, ctx) {
-      return executeList(params, getStore(), currentRolloutId(ctx));
+      return toToolResult(await executeList(params, getStore(), currentRolloutId(ctx)));
     },
   });
 
@@ -94,7 +98,7 @@ export default function (pi: ExtensionAPI) {
     description: COMMENT_DESC,
     parameters: COMMENT_PARAMS,
     async execute(_id, params, _signal, _onUpdate, ctx) {
-      return executeComment(getStore(), params, currentRolloutId(ctx));
+      return toToolResult(await executeComment(getStore(), params, currentRolloutId(ctx)));
     },
   });
 
@@ -104,7 +108,7 @@ export default function (pi: ExtensionAPI) {
     description: STATUS_DESC,
     parameters: STATUS_PARAMS,
     async execute(_id, params, _signal, _onUpdate, ctx) {
-      return executeStatus(getStore(), params, currentRolloutId(ctx));
+      return toToolResult(await executeStatus(getStore(), params, currentRolloutId(ctx)));
     },
   });
 
@@ -114,7 +118,7 @@ export default function (pi: ExtensionAPI) {
     description: RULES_DESC,
     parameters: NONE_PARAMS,
     async execute() {
-      return executeRules();
+      return toToolResult(await executeRules());
     },
   });
 
@@ -124,7 +128,7 @@ export default function (pi: ExtensionAPI) {
     description: HELP_DESC,
     parameters: NONE_PARAMS,
     async execute() {
-      return executeHelp();
+      return toToolResult(await executeHelp());
     },
   });
 
