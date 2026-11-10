@@ -1,25 +1,24 @@
-// ticket.ts — the tool contract, ported from server/ticket.ts (the Vibe MCP
-// server) to the pi extension. One tool per action; every failure returns the
-// { code, message, corrected_call } envelope (issue #18); corrected_call is the
+// ticket.ts — the tool contract. One tool per action; every failure returns
+// the { code, message, corrected_call } envelope; corrected_call is the
 // COMPLETE call — received values kept, missing ones filled with REAL ids
 // wherever they are derivable — so a failing model re-emits it verbatim and
 // succeeds.
 //
-// THE CONTRACT (unchanged): a ticket is an IMMUTABLE record with an
-// append-only comment stream; STATUS is the only field that ever changes;
-// nothing is ever deleted. Access is by ticket number.
+// THE CONTRACT: a ticket is an IMMUTABLE record with an append-only comment
+// stream; STATUS is the only field that ever changes; nothing is ever
+// deleted. Access is by ticket number.
 //
 // This module is deliberately pure: no pi, no typebox, no harness imports.
 // The harness-facing TypeBox schemas live in ../schemas.ts; the registration
 // wrappers live in the extension entry. That keeps the contract unit-testable
-// on a bare Node/Bun runtime (see ticket.test.ts).
+// on a bare Node runtime (see ticket.test.ts).
 //
-// What changed vs the Vibe server (and why):
-//   * The JTD validators and hand-written JSON Schemas are gone. pi validates
-//     tool arguments against the TypeBox schema at the harness layer, before
-//     execute() runs — misuse is unrepresentable there. The handlers keep
-//     semantic checks (empty strings, unknown ids, owner gate) as defense in
-//     depth, returning the same stable envelope codes.
+// Division of labour with the harness:
+//   * Schema violations (wrong types, illegal enum values, unknown keys,
+//     over-long comments) are rejected by pi at the harness layer, before
+//     execute() runs. The handlers keep semantic checks (empty strings,
+//     unknown ids, owner gate) as defense in depth, returning the same
+//     stable envelope codes.
 //   * ticket_add takes NO session id. pi knows its own session; the owner is
 //     stamped from ground truth (session.ts). Only ticket_status (the owner
 //     gate) and ticket_list (cross-session adoption) still take ids as input.
@@ -42,7 +41,7 @@ export const STATUS_VALUES: readonly TicketStatus[] = [
   "superseded",
 ];
 
-// ─── The error envelope (issue #18) ─────────────────────────────────────────
+// ─── The error envelope ─────────────────────────────────────────────────────
 
 const HELP_HINT = " — recover with one call: ticket_help";
 

@@ -1,14 +1,13 @@
 // todo-tool.ts — todo_write: the hot, ordered, per-session todo list.
 //
-// Ported from the opencode/Vibe todo example. The state lives in tool-result
-// details (the todo.ts pattern), so it is automatically correct when you
-// branch or fork a session; reconstructState replays the branch on
+// State lives in tool-result details, so it is automatically correct when you
+// branch or fork a session; reconstructState replays the session branch on
 // session_start / session_tree.
 //
-// The one pi-specific graft: every flush mirrors statuses onto the ticket
-// store (lib/sync.ts, fail-open). The doctrine is enforced here, not in the
-// system prompt: a delegatee that calls todo_write is refused — todo_write is
-// the ORCHESTRATOR's tool; report back via ticket_comment.
+// Every flush mirrors statuses onto the ticket store (lib/sync.ts, fail-open).
+// The doctrine is enforced here, not in the system prompt: a delegatee that
+// calls todo_write is refused — todo_write is the ORCHESTRATOR's tool; report
+// back via ticket_comment.
 import { StringEnum } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 import { Text } from "@earendil-works/pi-tui";

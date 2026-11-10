@@ -1,13 +1,12 @@
 // session.ts — ground-truth rollout-id resolution.
 //
-// Doctrine (unchanged from the Vibe/opencode line): owners and comment authors
-// are NEVER taken from model input — they are stamped from ground truth. On pi
-// the harness knows its own session, so this collapses to a resolution order:
+// The doctrine: owners and comment authors are NEVER taken from model input —
+// they are stamped from ground truth. pi knows its own session, so identity
+// collapses to a resolution order:
 //
 //   1. TICKET_ROLLOUT_ID env — injected by the delegate tool when it spawns a
-//      subagent (`pi --mode json`), exactly like the Vibe server read
-//      TICKET_SESSION_ID. A delegatee's writes therefore land in its delegated
-//      namespace without trusting any caller input.
+//      subagent (pi --mode json). A delegatee's writes therefore land in its
+//      delegated namespace without trusting any caller input.
 //   2. The pi session id, captured once at session_start / session_tree.
 //   3. A ctx passed directly (fallback for handlers invoked before capture).
 //

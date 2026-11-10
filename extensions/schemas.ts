@@ -3,8 +3,7 @@
 // pi validates tool arguments against these before execute() runs, so misuse
 // is unrepresentable at the harness layer: wrong types, illegal enum values,
 // unknown keys, and over-long comments are all rejected before the handler.
-// The per-tool JTD validators and hand-written JSON Schemas of the Vibe server
-// are gone — these schemas ARE the contract now. Keep them strict.
+// These schemas ARE the contract — keep them strict.
 //
 // StringEnum (not Type.Union/Type.Literal) for the status: it produces a plain
 // JSON `enum`, which every provider accepts.

@@ -1,8 +1,13 @@
-// Ported from the Vibe plugin's server/ticket-store.ts (bun:sqlite). The only
-// changes: node:sqlite (DatabaseSync — implemented by both Node ≥ 22.5 and Bun,
-// so the store stays runtime-agnostic with zero runtime deps) and the default
-// DB home, which moves to pi's agent tree. The schema is byte-identical to the
-// Vibe plugin's: point TICKET_DB_HOME at the Vibe db to share one store.
+// ticket-store.ts — the durable registry: one SQLite file outside every repo
+// (`~/.pi/agent/ticketing/ticket.db`, override TICKET_DB_HOME), shared by all
+// sessions on all projects and worktrees; the autoincrement id is the only
+// global ticket number.
+//
+// node:sqlite (DatabaseSync) is the deliberate choice: implemented by both
+// Node ≥ 22.5 and Bun's compat layer, so the package carries zero runtime
+// dependencies and loads wherever pi loads. Note Bun's own runtime does not
+// ship node:sqlite — pi runs on Node, which is the only runtime that matters
+// in-process, and the tests run under node --test.
 import { DatabaseSync } from "node:sqlite"
 import { mkdirSync } from "node:fs"
 import { dirname, join } from "node:path"

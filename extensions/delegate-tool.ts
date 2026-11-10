@@ -1,13 +1,11 @@
 // delegate-tool.ts — delegate: hand a ticket to a spawned pi subagent.
 //
-// Spec from the subagent example: spawn a separate `pi` process per task in
-// JSON mode, capped parallelism, per-task output caps, usage stats. The
-// ticket-ification: the ticket number IS the contract. The delegatee's
-// namespace is injected via TICKET_ROLLOUT_ID in the spawned environment
-// (exactly the trick server/index.ts used to read TICKET_SESSION_ID on Vibe):
-// because the same globally-installed extension loads inside the subagent,
-// session.ts resolves that env var first and the delegatee's writes land in
-// the delegated namespace without trusting any caller input.
+// Spawns a separate `pi` process per task in JSON mode: capped parallelism,
+// per-task output caps, usage stats. The ticket number IS the contract. The
+// delegatee's namespace is injected via TICKET_ROLLOUT_ID in the spawned
+// environment: because the same globally-installed extension loads inside the
+// subagent, session.ts resolves that env var first and the delegatee's writes
+// land in the delegated namespace without trusting any caller input.
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import * as fs from "node:fs";

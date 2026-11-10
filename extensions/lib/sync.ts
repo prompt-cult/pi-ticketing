@@ -1,13 +1,11 @@
-// sync.ts — the todo→ticket mirror, moved in-process.
+// sync.ts — the todo→ticket mirror.
 //
-// The Vibe plugin did this in a post_tool hook subprocess (server/sync-hook.ts,
-// fed by ai.mistral.vibe/hooks.toml). pi loads extensions in-process, so the
-// mirror is now a pure function called from the todo_write execute body —
-// same store method (syncStatuses), same fail-open law: the ticket store must
-// NEVER break the todo flush.
+// A pure function, called from the todo_write execute body (pi loads
+// extensions in-process — no subprocess, no hooks): same store method
+// (syncStatuses), same fail-open law — the ticket store must NEVER break the
+// todo flush.
 //
-// Item shape is unchanged from the Vibe line so the store needs no changes:
-// each item is { content, status } where content starts "N: " for items that
+// Item shape: { content, status } where content starts "N: " for items that
 // back ticket N. The N is the item's permanent id — never renumbered.
 
 import type { TicketStore } from "./ticket-store.ts";

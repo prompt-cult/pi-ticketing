@@ -1,10 +1,9 @@
 // render.ts — the /tickets overlay: a TUI component fed by the store.
 //
-// The per-tool renderCall/renderResult live inline on each tool (the todo.ts
-// pattern). This file holds the one piece of real custom UI: a modal overlay
-// listing the current session's tickets, grouped by status, fed by
-// store.list() for the current rollout id — with `all` showing every session's.
-// Escape closes.
+// The per-tool renderCall/renderResult live inline on each tool. This file
+// holds the one piece of real custom UI: a modal overlay listing the current
+// session's tickets, grouped by status, fed by store.list() for the current
+// rollout id — with `all` showing every session's. Escape closes.
 import { matchesKey, truncateToWidth } from "@earendil-works/pi-tui";
 import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
 import { currentRolloutId } from "./lib/session.ts";
