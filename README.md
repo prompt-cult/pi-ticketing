@@ -32,10 +32,55 @@ The contract:
 
 ## Install
 
+Two routes: into a target git repo (project-local), or into your global pi
+config (every project, this user).
+
+### Project-local — `make install-repo DEST=<path/to/git-repo>`
+
 ```sh
-pi install ./pi-ticketing          # local package
-pi -e ./extensions/index.ts        # or try it for one invocation
+make install-repo DEST=~/work/some-repo        # → some-repo/.pi/
+make install-repo DEST=~/work/some-repo PRUNE=1  # prune stale files first
+make uninstall-repo DEST=~/work/some-repo
 ```
+
+Produces:
+
+```text
+<repo>/
+└── .pi/
+    ├── extensions/pi-ticketing/   # index.ts + lib/ + tools (one level deep — pi's discovery rule)
+    └── skills/ticketing/SKILL.md  # discovered recursively
+```
+
+The destination must be a directory containing `.git` (worktrees count — the
+check is `test -e`, and a worktree's `.git` is a file). Without it the install
+refuses, so a path typo can't spray `.pi/` into an unrelated directory.
+Project-local extensions load after you trust the project; run `/reload` if a
+session is live. Commit `.pi/` to share the extension with the repo's other
+users; `PRUNE=1` is the safe re-install when files were removed in a newer
+version (default overwrite is idempotent but never deletes).
+
+### Global — `make install-global`
+
+```sh
+make install-global             # → ~/.pi/agent/extensions/pi-ticketing/ + skills/ticketing/
+make uninstall-global
+```
+
+Loads in every project with no trust prompt. Run `/reload` in a live pi
+session to pick it up immediately.
+
+### Other routes
+
+```sh
+pi -e ./extensions/index.ts     # try it for one invocation, no install
+make test                       # 13 contract tests, no pi needed
+```
+
+The payload is only `extensions/` + `skills/ticketing/` — no build step, no
+`npm install` at the destination (the extension imports only host-provided
+packages plus `node:sqlite`), and the installers never stage or commit
+anything in the target repo.
 
 ## Test
 
@@ -50,6 +95,7 @@ todo→ticket mirror.
 ## Layout
 
 ```
+Makefile                   install-repo / install-global / uninstall / test / help
 package.json               pi-package manifest (peerDependencies, no runtime deps)
 extensions/index.ts        entry: store singleton, session lifecycle, 7 ticket tools
 extensions/schemas.ts      TypeBox schemas — misuse unrepresentable at the harness layer
