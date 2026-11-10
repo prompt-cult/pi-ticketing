@@ -1,0 +1,74 @@
+name: pages
+
+# Static site only: the docs/ folder is served as-is.
+# The official Pages deployment path is used (upload-pages-artifact /
+# deploy-pages), so the site is served from an artifact rather than a
+# `gh-pages` branch, and Jekyll never touches the output.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time; the last push to main is the one that ships.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Static site: docs/ is the root; verify every relative href resolves
+      # to a file in docs/ and every fragment names a heading that page
+      # actually carries.
+      - name: Check internal links
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, sys
+          root = pathlib.Path("docs")
+          href = re.compile(r'href="([^"]+)"')
+          anchors = {}
+          for page in root.rglob("*.html"):
+              text = page.read_text(encoding="utf-8")
+              anchors[page] = set(re.findall(r'id="([^"]+)"', text))
+          broken = []
+          for page in sorted(root.rglob("*.html")):
+              for link in href.findall(page.read_text(encoding="utf-8")):
+                  if link.startswith(("http://", "https://", "mailto:", "#")):
+                      continue
+                  path, sep, fragment = link.partition("#")
+                  target = (root / path.lstrip("/")) if path.startswith("/") else (page.parent / path)
+                  target = target.resolve()
+                  if not target.exists():
+                      broken.append(f"{page.relative_to(root)} -> {link}")
+                  elif sep and fragment and target in anchors and fragment not in anchors[target]:
+                      broken.append(f"{page.relative_to(root)} -> {link} (no such heading)")
+          for line in broken:
+              print(f"broken link: {line}")
+          sys.exit(1 if broken else 0)
+          PY
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

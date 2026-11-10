@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pi-ticketing — tickets, todos, delegation for pi</title>
+<style>
+  body { font: 16px/1.6 -apple-system, "Helvetica Neue", Helvetica, sans-serif; color: #1a1a1a; margin: 0; background: #fafafa; }
+  header { border-bottom: 1px solid #ddd; padding: 24px 24px 16px; background: #fff; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  header p { margin: 0; color: #555; }
+  main { max-width: 880px; margin: 0 auto; padding: 24px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #e3e3e3; padding-bottom: 6px; margin-top: 32px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; background: #fff; margin: 16px 0; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0 0 10px; color: #444; }
+  .card ul { margin: 0; padding-left: 20px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; background: #fff; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 14px; }
+  th { background: #f0f0f0; }
+  td code { white-space: nowrap; }
+  pre { background: #f0f0f0; border-radius: 6px; padding: 12px 16px; overflow-x: auto; font-size: 14px; }
+  a { color: #0a5cad; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 14px; background: #f0f0f0; padding: 1px 5px; border-radius: 4px; }
+  footer { border-top: 1px solid #ddd; padding: 16px 24px; color: #777; font-size: 14px; background: #fff; }
+</style>
+</head>
+<body>
+<header>
+  <h1>pi-ticketing</h1>
+  <p>Tickets, todos, and delegation for <a href="https://pi.dev">pi</a> — three capabilities pi does not ship, as one package. One SQLite file. Every session, every repo.</p>
+</header>
+<main>
+
+<h2>What it is</h2>
+
+<div class="card">
+  <h3>Tickets — the cold, durable record</h3>
+  <p>A ticket is an <strong>immutable</strong> record with an <strong>append-only</strong> comment stream; status is the only field that ever changes. Nothing is ever deleted. The store is one SQLite file outside every repo (<code>~/.pi/agent/ticketing/ticket.db</code>, WAL mode, <code>node:sqlite</code> — zero runtime dependencies), shared by all sessions on all projects and worktrees; the autoincrement id is the only global ticket number.</p>
+</div>
+
+<div class="card">
+  <h3>Todos — the hot, ordered list</h3>
+  <p><code>todo_write</code> flushes the list wholesale; state lives in tool-result details, so it is automatically correct when you branch or fork a session. Each item backed by a ticket starts <code>"N: …"</code> — the ticket number is the item's permanent id, never renumbered. Closing item <code>N: …</code> mirrors ticket N's status automatically (fail-open: a broken store never breaks the flush).</p>
+</div>
+
+<div class="card">
+  <h3>Delegation — the hands</h3>
+  <p><code>delegate</code> spawns <code>pi --mode json</code> subagents with isolated context. The ticket number is the contract; the delegatee's first calls are <code>ticket_get</code> and <code>ticket_rules</code>. Its namespace is injected as <code>TICKET_ROLLOUT_ID</code> in the spawned environment — the same installed extension loads inside the subagent, so its writes land in the delegated namespace without trusting caller input.</p>
+</div>
+
+<h2>The tools</h2>
+
+<table>
+  <tr><th>Tool</th><th>What it does</th></tr>
+  <tr><td><code>ticket_add</code></td><td>Create a ticket: one-line summary + the spec written ONCE (immutable body). Returns the permanent number N. Owner stamped from ground truth — never passed as input.</td></tr>
+  <tr><td><code>ticket_get</code></td><td>Read one ticket: the row plus its comments, chronological. By number — no id needed.</td></tr>
+  <tr><td><code>ticket_list</code></td><td>List tickets: yours by default, another session's by <code>rollout_id</code> (adoption), everything with <code>all=true</code>.</td></tr>
+  <tr><td><code>ticket_comment</code></td><td>Append ONE short go/no-go note (≤1000 chars). Long reports never go on the ticket.</td></tr>
+  <tr><td><code>ticket_status</code></td><td>The ONLY mutation: set status. Owner-gated — takes the OWNING session's id.</td></tr>
+  <tr><td><code>ticket_rules</code></td><td>The delegatee banner: immutability law, standing subagent rules, envelope recovery.</td></tr>
+  <tr><td><code>ticket_help</code></td><td>The whole contract in one call — the recovery for a lost agent.</td></tr>
+  <tr><td><code>todo_write</code></td><td>Flush the hot list; mirrors statuses onto tickets; refuses delegatees (single writer, enforced).</td></tr>
+  <tr><td><code>delegate</code></td><td>Hand a ticket to a spawned pi subagent — single or parallel (up to 8).</td></tr>
+</table>
+
+<p>Plus <code>/tickets</code> — a modal overlay listing the current session's tickets, grouped by status, Escape closes.</p>
+
+<h2>Identity</h2>
+
+<p><code>rollout_id</code> IS the session id — one id, no other. Owners and comment authors are stamped from ground truth: the pi session id, or the delegated namespace injected into a subagent's environment — never taken from model input. Only two tools accept an id as input, deliberately: <code>ticket_status</code> (the owner gate) and <code>ticket_list</code> (cross-session adoption).</p>
+
+<h2>Errors</h2>
+
+<p>Every failure returns <code>{code, message, corrected_call}</code>. <code>corrected_call</code> is the COMPLETE call — received values kept, missing ones filled with real ids wherever they are derivable. Re-emit it verbatim (fill any <code>&lt;fill: …&gt;</code> placeholder) and the call succeeds. Type, enum, unknown-key, and length violations are rejected at the harness layer by TypeBox schemas before any handler runs.</p>
+
+<h2>Install</h2>
+
+<pre><code>make install-repo DEST=&lt;path/to/git-repo&gt;   # project-local: DEST/.pi/
+make install-global                          # every project: ~/.pi/agent/
+make test                                    # 14 contract tests, no pi needed</code></pre>
+
+<p>The destination must be a directory containing <code>.git</code> (worktrees count). Never install both globally and project-locally — the installers refuse that combination, because pi would load both copies and crash on duplicate tool names.</p>
+
+<h2>Articles</h2>
+
+<div class="card">
+  <h3><a href="articles/design.md">Design — architecture, decisions, why</a></h3>
+  <p>The hot/cold split, ground-truth identity, the corrected_call envelope, details-based todo state, the fail-open mirror, namespace injection, and the seven decisions behind them.</p>
+</div>
+
+<h2>Links</h2>
+
+<div class="card">
+  <ul>
+    <li>Repository: <a href="https://github.com/prompt-cult/pi-ticketing">prompt-cult/pi-ticketing</a></li>
+    <li>Sibling projects: <a href="https://github.com/prompt-cult/opencode-ticketing">opencode-ticketing</a> · <a href="https://github.com/prompt-cult/mistral-vibe-ticketing">mistral-vibe-ticketing</a> — the same contract for other harnesses</li>
+  </ul>
+</div>
+
+</main>
+<footer>prompt-cult · MIT license · <a href="https://github.com/prompt-cult/pi-ticketing">source</a></footer>
+</body>
+</html>
