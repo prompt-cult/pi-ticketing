@@ -7,6 +7,11 @@ name: pages
 on:
   push:
     branches: [main]
+    # Markdown-only churn does not affect the artifact. docs/** is deliberately
+    # NOT ignored: docs/ is the published site (upload-pages-artifact path), so
+    # a docs push must still build, link-check, and deploy.
+    paths-ignore:
+      - '*.md'
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -22,6 +27,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       # Static site: docs/ is the root; verify every relative href resolves
@@ -62,6 +68,7 @@ jobs:
     needs: build
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       pages: write
       id-token: write
