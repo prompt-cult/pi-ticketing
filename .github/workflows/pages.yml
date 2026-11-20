@@ -7,11 +7,16 @@ name: pages
 on:
   push:
     branches: [main]
-    # Markdown-only churn does not affect the artifact. docs/** is deliberately
-    # NOT ignored: docs/ is the published site (upload-pages-artifact path), so
-    # a docs push must still build, link-check, and deploy.
+    # Churn that cannot reach the artifact (upload-pages-artifact path: docs) is
+    # skipped: root-level markdown, the shipped skill docs, and scratch space.
+    # docs/** is deliberately NOT ignored - docs/ IS the published site, and
+    # docs/index.html links articles/design.md, so a docs push must still build,
+    # link-check, and deploy. '*' never crosses '/', so '*.md' cannot match
+    # docs/articles/design.md.
     paths-ignore:
       - '*.md'
+      - 'skills/**'
+      - '.tmp/**'
   pull_request:
     branches: [main]
   workflow_dispatch:
